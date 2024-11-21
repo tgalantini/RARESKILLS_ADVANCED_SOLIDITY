@@ -1,0 +1,5 @@
+# Events
+### @author Tommaso Galantini
+
+## Revisit the solidity events tutorial. How can OpenSea quickly determine which NFTs an address owns if most NFTs don’t use ERC721 enumerable? Explain how you would accomplish this if you were creating an NFT marketplace
+    If i were opensea or an NFT marketplace and i had to determine which NFTs an address owns, i would simply start a scan of the blockchain, targetting events "transferFrom" and "safeTransferFrom" involving NFT contracts, from and to the address. There is no need to filter all transactions in a block, the Bloom filter can be used to retrieve all events that occur in a block making this cheaper in terms of computation. Once retrieved all events involving an address, a simple script can determine what NFTs are currently owned by the address, filtering out the NFTs that the address has sent out. Moreover, mantaining an off-chain database can help a lot in terms of computation, if all the known NFTs are mapped in a DB, keeping track of the owners, retrieving and updating data can be much faster.
