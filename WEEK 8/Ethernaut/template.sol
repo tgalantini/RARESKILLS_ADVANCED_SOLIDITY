@@ -8,6 +8,7 @@ contract EchidnaTestDex {
     Dex public dex;
     IERC20 public token1;
     IERC20 public token2;
+    uint256 initialLiquidity;
 
     constructor() {
         // Deploy Dex contract
@@ -29,37 +30,51 @@ contract EchidnaTestDex {
         // Provide initial user balances
         token1.transfer(address(this), 10);
         token2.transfer(address(this), 10);
+
+        initialLiquidity = sqrt(
+            IERC20(token1).balanceOf(address(dex)) * IERC20(token2).balanceOf(address(dex))
+        );
     }
 
-    // function echidna_break_dex() public returns (bool) {
-    //     // Exploit the Dex by swapping token1 and token2 repeatedly
-    //         IERC20(token1).approve(address(this), type(uint256).max);
-    //         IERC20(token2).approve(address(this), type(uint256).max);
+    function testSwap(uint256 amount, uint8 direction) public {
+        // Constrain amount to avoid unrealistic scenarios
 
-    //         while(IERC20(token1).balanceOf(address(dex)) > 0 || IERC20(token2).balanceOf(address(dex)) > 0) {
+        if (direction == 0) {
+            // Swap token1 for token2
+            IERC20(token1).approve(address(dex), type(uint256).max);
+            if (IERC20(token1).balanceOf(msg.sender) >= amount) {
+                dex.swap(address(token1), address(token2), amount);
+            }
+        } else {
+            // Swap token2 for token1
+            IERC20(token2).approve(address(dex), type(uint256).max);
+            if (IERC20(token2).balanceOf(msg.sender) >= amount) {
+                dex.swap(address(token2), address(token1), amount);
+            }
+        }
+    }
 
-    //             if (IERC20(token1).balanceOf(msg.sender) > 0) {
-    //                 dex.swap(address(token1), address(token2), IERC20(token1).balanceOf(msg.sender));
-    //             }
+    function sqrt(uint256 x) internal pure returns (uint256 y) {
+        if (x == 0) return 0;
+        uint256 z = (x + 1) / 2;
+        y = x;
+        while (z < y) {
+            y = z;
+            z = (x / z + z) / 2;
+        }
+    }
 
-    //             // Swap token2 for token1
-    //             if (IERC20(token2).balanceOf(msg.sender) > 0) {
-    //                 dex.swap(address(token2), address(token1), IERC20(token2).balanceOf(msg.sender));
-    //             }
-    //     }
+    function echidna_test_liquidity_is_reasonable() public view returns (bool) {
+        uint256 currentLiquidity = sqrt(
+            IERC20(token1).balanceOf(address(dex)) * IERC20(token2).balanceOf(address(dex))
+        );
 
-    //     // Check if Dex reserves are drained
-    //     bool token1Drained = IERC20(token1).balanceOf(address(this)) == 0;
-    //     bool token2Drained = IERC20(token2).balanceOf(address(this)) == 0;
+        // Ensure liquidity has not dropped below 50% of the initial liquidity
+        return currentLiquidity >= initialLiquidity;
+    }
 
-    //     return token1Drained || token2Drained;
-    // }
+    function echidna_test_drain() public returns(bool){
 
-    function echidna_test_dex() public returns(bool){
-        
-        bool token1Drained = IERC20(token1).balanceOf(address(this)) == 0;
-        bool token2Drained = IERC20(token2).balanceOf(address(this)) == 0;
-
-        return token1Drained || token2Drained;
+         return IERC20(token1).balanceOf(address(this)) == 0 || IERC20(token2).balanceOf(address(this)) == 0;
     }
 }
