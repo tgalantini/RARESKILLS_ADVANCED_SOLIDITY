@@ -73,8 +73,8 @@ contract EchidnaTestDex {
         return currentLiquidity >= initialLiquidity;
     }
 
-    function echidna_test_drain() public returns(bool){
+    function echidna_test_drain() public view returns(bool){
 
-         return IERC20(token1).balanceOf(address(this)) == 0 || IERC20(token2).balanceOf(address(this)) == 0;
+         return IERC20(token1).balanceOf(address(dex)) > 0 || IERC20(token2).balanceOf(address(dex)) > 0;
     }
 }
