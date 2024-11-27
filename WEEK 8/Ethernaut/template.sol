@@ -28,8 +28,8 @@ contract EchidnaTestDex {
         token2.approve(address(dex), type(uint256).max);
 
         // Provide initial user balances
-        token1.transfer(address(this), 10);
-        token2.transfer(address(this), 10);
+        token1.transfer(msg.sender, 10);
+        token2.transfer(msg.sender, 10);
 
         initialLiquidity = sqrt(
             IERC20(token1).balanceOf(address(dex)) * IERC20(token2).balanceOf(address(dex))
@@ -75,6 +75,6 @@ contract EchidnaTestDex {
 
     function echidna_test_drain() public view returns(bool){
 
-         return IERC20(token1).balanceOf(address(dex)) > 0 || IERC20(token2).balanceOf(address(dex)) > 0;
+         return IERC20(token1).balanceOf(address(dex)) > 0 && IERC20(token2).balanceOf(address(dex)) > 0;
     }
 }
