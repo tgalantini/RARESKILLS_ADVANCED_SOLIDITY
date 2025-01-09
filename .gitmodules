@@ -1,3 +1,9 @@
 [submodule "WEEK7/vertigo/lib/forge-std"]
 	path = WEEK7/vertigo/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "WEEK 9-10-11-12/rareskills-riddles/lib/forge-std"]
+	path = WEEK 9-10-11-12/rareskills-riddles/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "WEEK 9-10-11-12/rareskills-riddles/lib/openzeppelin-contracts"]
+	path = WEEK 9-10-11-12/rareskills-riddles/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
