@@ -2,3 +2,29 @@ Openzeppelin
 crytic-export
 .DS_Store
 UNI-V2-PUZZ
+WEEK 17/LooksRare/lib/openzeppelin-contracts/
+WEEK 17/LooksRare/foundry.toml
+WEEK 17/LooksRare/README.md
+WEEK 17/LooksRare/remappings.txt
+WEEK 17/Synthetix/.github/workflows/test.yml
+WEEK 17/Synthetix/foundry.toml
+WEEK 17/Synthetix/lib/forge-std
+WEEK 17/Synthetix/lib/openzeppelin-contracts
+WEEK 17/Synthetix/lib/solady
+WEEK 17/Synthetix/README.md
+WEEK 17/Synthetix/remappings.txt
+WEEK 17/Synthetix/lib/forge-std
+WEEK 17/Synthetix/lib/openzeppelin-contracts
+WEEK 17/Synthetix/lib/solady
+WEEK 17/ThirdWeb/.github/workflows/test.yml
+WEEK 17/ThirdWeb/foundry.toml
+WEEK 17/ThirdWeb/lib/forge-std
+WEEK 17/ThirdWeb/lib/openzeppelin-contracts/
+WEEK 17/ThirdWeb/README.md
+WEEK 17/ThirdWeb/remappings.txt
+WEEK 17/ThirdWeb/lib/forge-std
+WEEK 17/Traderjoe/foundry.toml
+WEEK 17/Traderjoe/lib/forge-std
+WEEK 17/Traderjoe/lib/openzeppelin-contracts/
+WEEK 17/Traderjoe/README.md
+WEEK 17/Traderjoe/remappings.txt
