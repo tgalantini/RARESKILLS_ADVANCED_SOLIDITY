@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Ownable} from "@solady/auth/Ownable.sol";
+import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Custom Errors
 error ZeroAddressBeneficiary();
@@ -14,7 +15,6 @@ error CannotRevoke();
 error TokenAlreadyRevoked();
 
 contract TokenVesting is Ownable {
-    using SafeERC20 for IERC20;
 
     event TokensReleased(address token, uint256 amount);
     event TokenVestingRevoked(address token);
@@ -52,7 +52,8 @@ contract TokenVesting is Ownable {
         uint256 cliffDuration_,
         uint256 duration_,
         bool revocable_
-    ) Ownable(msg.sender){
+    ){
+        _initializeOwner(msg.sender);
         if (beneficiary_ == address(0)) _cheapRevert(ZeroAddressBeneficiary.selector);
         if (cliffDuration_ > duration_) _cheapRevert(CliffLongerThanDuration.selector);
         if (duration_ == 0) _cheapRevert(DurationIsZero.selector);
@@ -97,13 +98,13 @@ contract TokenVesting is Ownable {
      * @notice Transfers vested tokens to beneficiary.
      * @param token ERC20 token which is being vested
      */
-    function release(IERC20 token) public {
-        uint256 unreleased = _releasableAmount(token);
+    function release(address token) public {
+        uint256 unreleased = _releasableAmount(IERC20(token));
         if (unreleased == 0) _cheapRevert(NoTokensDue.selector);
 
         address tokenAddress = address(token);
         _released[tokenAddress] += unreleased;
-        token.safeTransfer(_beneficiary, unreleased);
+        SafeTransferLib.safeTransfer(token, _beneficiary, unreleased);
 
         emit TokensReleased(tokenAddress, unreleased);
     }
@@ -113,17 +114,17 @@ contract TokenVesting is Ownable {
      * and the remainder is returned to the owner.
      * @param token ERC20 token which is being vested
      */
-    function revoke(IERC20 token) public onlyOwner {
+    function revoke(address token) public onlyOwner {
         address tokenAddress = address(token);
         if (!_revocable) _cheapRevert(CannotRevoke.selector);
         if (_revoked[tokenAddress]) _cheapRevert(TokenAlreadyRevoked.selector);
 
-        uint256 balance = token.balanceOf(address(this));
-        uint256 unreleased = _releasableAmount(token);
+        uint256 balance = IERC20(token).balanceOf(address(this));
+        uint256 unreleased = _releasableAmount(IERC20(token));
         uint256 refund = balance - unreleased;
 
         _revoked[tokenAddress] = true;
-        token.safeTransfer(owner(), refund);
+        SafeTransferLib.safeTransfer(token, owner(), refund);
         emit TokenVestingRevoked(tokenAddress);
     }
 
@@ -132,14 +133,14 @@ contract TokenVesting is Ownable {
      * including the vested amount. To be used when the beneficiary can no longer claim tokens.
      * @param token ERC20 token which is being vested
      */
-    function emergencyRevoke(IERC20 token) public onlyOwner {
+    function emergencyRevoke(address token) public onlyOwner {
         address tokenAddress = address(token);
         if (!_revocable) _cheapRevert(CannotRevoke.selector);
         if (_revoked[tokenAddress]) _cheapRevert(TokenAlreadyRevoked.selector);
 
-        uint256 balance = token.balanceOf(address(this));
+        uint256 balance = IERC20(token).balanceOf(address(this));
         _revoked[tokenAddress] = true;
-        token.safeTransfer(owner(), balance);
+        SafeTransferLib.safeTransfer(token, owner(), balance);
         emit TokenVestingRevoked(tokenAddress);
     }
 

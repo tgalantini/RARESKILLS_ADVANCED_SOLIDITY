@@ -1,16 +1,15 @@
 pragma solidity ^0.8.20;
 
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@solady/tokens/ERC20.sol";
+import "@solady/utils/ReentrancyGuard.sol";
+import {Ownable} from "@solady/auth/Ownable.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import {SafeTransferLib} from "@solady/utils/SafeTransferLib.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {console} from "forge-std/console.sol";
 import {IStakingRewards} from "./IStakingRewards.sol";
 
 // https://docs.synthetix.io/contracts/source/contracts/stakingrewards
 contract StakingRewards is IStakingRewards, ReentrancyGuard, Pausable, Ownable {
-    using SafeERC20 for IERC20;
 
         /* ========== EVENTS ========== */
 
@@ -32,8 +31,8 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard, Pausable, Ownable {
 
     /* ========== STATE VARIABLES ========== */
     address public rewardsDistribution;
-    IERC20 public rewardsToken;
-    IERC20 public stakingToken;
+    address public rewardsToken;
+    address public stakingToken;
     uint256 public periodFinish = 0;
     uint256 public rewardRate = 0;
     uint256 public rewardsDuration = 7 days;
@@ -53,10 +52,11 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard, Pausable, Ownable {
         address _rewardsDistribution,
         address _rewardsToken,
         address _stakingToken
-    ) Ownable(_owner) {
-        rewardsToken = IERC20(_rewardsToken);
-        stakingToken = IERC20(_stakingToken);
+    )  {
+        rewardsToken = (_rewardsToken);
+        stakingToken = (_stakingToken);
         rewardsDistribution = _rewardsDistribution;
+        _initializeOwner(_owner);
     }
 
     /* ========== VIEWS ========== */
@@ -97,7 +97,7 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard, Pausable, Ownable {
         require(amount > 0, cannotStakeZero());
         _totalSupply += (amount);
         _balances[msg.sender] +=  (amount);
-        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
+        SafeTransferLib.safeTransferFrom(stakingToken, msg.sender, address(this), amount);
         emit Staked(msg.sender, amount);
     }
 
@@ -105,7 +105,7 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard, Pausable, Ownable {
         require(amount > 0, cannotWithdrawZero());
         _totalSupply -= (amount);
         _balances[msg.sender] -= (amount);
-        stakingToken.safeTransfer(msg.sender, amount);
+        SafeTransferLib.safeTransfer(stakingToken, msg.sender, amount);
         emit Withdrawn(msg.sender, amount);
     }
 
@@ -113,7 +113,7 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard, Pausable, Ownable {
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
-            rewardsToken.safeTransfer(msg.sender, reward);
+             SafeTransferLib.safeTransfer(rewardsToken, msg.sender, reward);
             emit RewardPaid(msg.sender, reward);
         }
     }
@@ -142,7 +142,7 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard, Pausable, Ownable {
         // This keeps the reward rate in the right range, preventing overflows due to
         // very high values of rewardRate in the earned and rewardsPerToken functions;
         // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
-        uint balance = rewardsToken.balanceOf(address(this));
+        uint balance = IERC20(rewardsToken).balanceOf(address(this));
         require(rewardRate <= balance / (_rewardDuration), rewardTooHigh());
 
         lastUpdateTime = timestamp;
@@ -153,7 +153,7 @@ contract StakingRewards is IStakingRewards, ReentrancyGuard, Pausable, Ownable {
     // Added to support recovering LP Rewards from other systems such as BAL to be distributed to holders
     function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyOwner {
         require(tokenAddress != address(stakingToken), stakingTokenCannotBeRewardsToken());
-        IERC20(tokenAddress).safeTransfer(owner(), tokenAmount);
+        SafeTransferLib.safeTransfer(tokenAddress, owner(), tokenAmount);
         emit Recovered(tokenAddress, tokenAmount);
     }
 

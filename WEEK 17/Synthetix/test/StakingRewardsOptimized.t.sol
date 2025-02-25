@@ -3,13 +3,21 @@ pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
 import "../src/StakingRewardsOptimized.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 
 contract MockERC20 is ERC20 {
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
+    constructor() {}
 
     function mint(address to, uint256 amount) public {
         _mint(to, amount);
+    }
+
+     function name() public view override returns (string memory){
+        return "test";
+    }
+
+    function symbol() public view override returns (string memory){
+        return "TEST";
     }
 }
 
@@ -27,8 +35,8 @@ contract StakingRewardsTest is Test {
 
     function setUp() public {
         // Deploy mock tokens
-        rewardsToken = new MockERC20("Rewards Token", "RWT");
-        stakingToken = new MockERC20("Staking Token", "STK");
+        rewardsToken = new MockERC20();
+        stakingToken = new MockERC20();
 
         // Mint initial supply
         rewardsToken.mint(rewardsDistribution, INITIAL_SUPPLY);

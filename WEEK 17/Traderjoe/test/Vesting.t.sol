@@ -1,15 +1,25 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
-
+import "@solady/tokens/ERC20.sol";
 import "forge-std/Test.sol";
-import "../src/TokenVesting.sol"; // adjust the path as needed
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "../src/TokenVestingOptimized.sol"; // adjust the path as needed
 
-/// @dev A minimal ERC20 token for testing purposes.
+
 contract DummyToken is ERC20 {
-    constructor() ERC20("Dummy", "DUM") {
-        // Mint a large amount of tokens to the deployer (the test contract).
+    constructor() {
         _mint(msg.sender, 1e24);
+    }
+
+    function mint(address to, uint256 amount) public {
+        _mint(to, amount);
+    }
+
+     function name() public view override returns (string memory){
+        return "test";
+    }
+
+    function symbol() public view override returns (string memory){
+        return "TEST";
     }
 }
 
@@ -62,7 +72,7 @@ contract TokenVestingTest is Test {
         uint256 preBalance = token.balanceOf(beneficiary);
 
         // Call release to transfer vested tokens.
-        vesting.release(IERC20(address(token)));
+        vesting.release((address(token)));
 
         // Ensure that the beneficiary's token balance increased.
         uint256 postBalance = token.balanceOf(beneficiary);
@@ -76,7 +86,7 @@ contract TokenVestingTest is Test {
 
         // Expect revert with the custom error NoTokensDue.
         vm.expectRevert();
-        vesting.release(IERC20(address(token)));
+        vesting.release((address(token)));
     }
 
     function testRevoke() public {
@@ -84,13 +94,13 @@ contract TokenVestingTest is Test {
         vm.warp(startTime + cliffDuration + 1);
 
         // Call release first so that some tokens have vested.
-        vesting.release(IERC20(address(token)));
+        vesting.release((address(token)));
 
         // Capture owner (msg.sender) token balance before revoke.
         uint256 ownerPreBalance = token.balanceOf(owner);
 
         // Call revoke; since the vesting is revocable, it should succeed.
-        vesting.revoke(IERC20(address(token)));
+        vesting.revoke((address(token)));
 
         // Verify that the owner received the refund.
         uint256 ownerPostBalance = token.balanceOf(owner);
@@ -105,7 +115,7 @@ contract TokenVestingTest is Test {
         uint256 ownerPreBalance = token.balanceOf(owner);
 
         // Call emergencyRevoke; this should transfer the entire balance back to the owner.
-        vesting.emergencyRevoke(IERC20(address(token)));
+        vesting.emergencyRevoke((address(token)));
 
         // Verify that the owner received the tokens.
         uint256 ownerPostBalance = token.balanceOf(owner);
