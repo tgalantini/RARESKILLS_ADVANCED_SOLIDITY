@@ -89,7 +89,6 @@ address private immutable _beneficiary;;
 
 ### Old Implementation
 
-- Looped through storage arrays directly:
 
 ```solidity
  // If not new deposit, calculate pending rewards (for auto-compounding)
@@ -157,7 +156,6 @@ for (uint256 i = 0; i < len; ) {
 
 ### Old Implementation
 
-- Looped through storage arrays directly:
 
 ```solidity
 function setTimeUnit(uint256 _timeUnit) external virtual {
@@ -194,6 +192,68 @@ function setTimeUnit(uint256 _timeUnit) external virtual {
 ## 8. Updating from Openzeppeling to Solady when possible
 
 **Benefit:** Solady offers a much optimized version of most common contracts, leevraging low level assembly to save gas on every aspect.
+
+---
+
+
+## 9. Caching storage variables to reduce multiple access.
+
+### Old Implementation
+
+
+```solidity
+function notifyRewardAmount(uint256 reward) external onlyRewardsDistribution updateReward(address(0)) {
+        if (block.timestamp >= periodFinish) {
+            rewardRate = reward / (rewardsDuration);
+        } else {
+            uint256 remaining = periodFinish - (block.timestamp);
+            uint256 leftover = remaining * (rewardRate);
+            rewardRate = reward + (leftover) / (rewardsDuration);
+        }
+
+        // Ensure the provided reward amount is not more than the balance in the contract.
+        // This keeps the reward rate in the right range, preventing overflows due to
+        // very high values of rewardRate in the earned and rewardsPerToken functions;
+        // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
+        uint balance = IERC20(rewardsToken).balanceOf(address(this));
+        require(rewardRate <= balance / (rewardsDuration), "Provided reward too high");
+
+        lastUpdateTime = block.timestamp;
+        periodFinish = block.timestamp + (rewardsDuration);
+        emit RewardAdded(reward);
+    }
+```
+
+### New Implementation
+
+
+```solidity
+function notifyRewardAmount(uint256 reward) external onlyRewardsDistribution updateReward(address(0)) {
+        uint256 timestamp = block.timestamp;
+        uint256 _periodFinish = periodFinish;
+        uint256 _rewardDuration = rewardsDuration;
+
+        if (timestamp >= _periodFinish) {
+            rewardRate = reward / (_rewardDuration);
+        } else {
+            uint256 remaining = _periodFinish - (timestamp);
+            uint256 leftover = remaining * (rewardRate);
+            rewardRate = reward + (leftover) / (_rewardDuration);
+        }
+
+        // Ensure the provided reward amount is not more than the balance in the contract.
+        // This keeps the reward rate in the right range, preventing overflows due to
+        // very high values of rewardRate in the earned and rewardsPerToken functions;
+        // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
+        uint balance = IERC20(rewardsToken).balanceOf(address(this));
+        require(rewardRate <= balance / (_rewardDuration), rewardTooHigh());
+
+        lastUpdateTime = timestamp;
+        periodFinish = timestamp + (_rewardDuration);
+        em
+```
+
+**Benefit:** Caching storager variables into a local variable inside a function body makes substancial gas savings as storage access are costly.
 
 ---
 
